@@ -63,6 +63,9 @@ ${opts.thumb ? '#rd-toolbar, #rd-dock, #rd-side, #rd-edge, #rd-stats, .rd-dock, 
   var THUMB = ${opts.thumb ? 'true' : 'false'};
   var VERSION = ${JSON.stringify(opts.version)};
   var token = (location.hash || '').replace(/^#/, '');
+  // Pasting another share link into this tab only changes the #part, which the
+  // browser doesn't reload for. Start over so the new link is used.
+  window.addEventListener('hashchange', function () { location.reload(); });
   var msg = function (text) {
     document.getElementById('cd-join').classList.remove('on');
     document.getElementById('rd-root').classList.add('cd-hide');
