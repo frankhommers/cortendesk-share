@@ -228,7 +228,12 @@ th { color:var(--muted); font-weight:500; }
   var selected = null; // display index, or 'all'
   var previews = [];
 
-  function fmtTime(t) { return t ? new Date(t * 1000).toLocaleString() : ''; }
+  // ISO 8601 in local time: 2026-11-06 19:24:11
+  function fmtTime(t) {
+    if (!t) return '';
+    var d = new Date(t * 1000), p = function (n) { return (n < 10 ? '0' : '') + n; };
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds());
+  }
   function rightsText(r) {
     var out = ['watch'];
     if (r.control) out.push('control'); if (r.clipboard) out.push('clipboard'); if (r.files) out.push('files'); if (r.audio) out.push('sound'); if (r.chat) out.push('chat');
