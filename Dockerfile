@@ -1,4 +1,4 @@
-# CortenDesk Share. Built by GitHub Actions and published to ghcr.io.
+# Share for CortenDesk. Built by GitHub Actions and published to ghcr.io.
 FROM node:24-alpine AS build
 WORKDIR /src/webclient
 COPY webclient/package.json webclient/package-lock.json ./

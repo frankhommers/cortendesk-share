@@ -1,8 +1,8 @@
-# CortenDesk Share
+# Share for CortenDesk
 
 Share a RustDesk screen with anyone who has a browser, through a secret link.
 It runs as its own container next to [CortenDesk](https://github.com/marcpope/cortendesk)
-and needs no changes to it.
+and needs no changes to it. It is an unofficial add-on, not part of CortenDesk.
 
 - **Rights per link, enforced on the server.** You choose watch only, or also
   mouse and keyboard, clipboard, files, sound and chat. The guest's browser

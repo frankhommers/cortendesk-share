@@ -1,4 +1,4 @@
-// CortenDesk Share: HTTP server for the guest page, the admin pages and the
+// Share for CortenDesk: HTTP server for the guest page, the admin pages and the
 // gateway WebSocket.
 
 import { createReadStream, existsSync, statSync } from 'node:fs';

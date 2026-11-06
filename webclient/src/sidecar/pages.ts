@@ -26,7 +26,7 @@ export function sharePage(opts: { thumb: boolean; version: string }): string {
 <meta name="referrer" content="no-referrer">
 <meta name="robots" content="noindex, nofollow">
 <title>Shared screen</title>
-<link rel="shortcut icon" href="/assets/images/cortendesk-sm.svg">
+<link rel="shortcut icon" href="/assets/images/share-icon.svg">
 <link rel="stylesheet" href="/assets/vendor/remixicon/remixicon.css">
 <link rel="stylesheet" href="/rdclient/app.css?v=${esc(opts.version)}">
 <style>
@@ -46,7 +46,7 @@ ${opts.thumb ? '#rd-toolbar, #rd-dock, #rd-side, #rd-edge, #rd-stats, .rd-dock, 
 </style>
 </head>
 <body${opts.thumb ? ' class="cd-thumb"' : ''}>
-<div id="cd-msg" role="alert"><div><img src="/rdclient/logo.png" alt="" width="48" height="48"><p id="cd-msg-text">This share link is not valid.</p></div></div>
+<div id="cd-msg" role="alert"><div><img src="/assets/images/share-icon.svg" alt="" width="48" height="48"><p id="cd-msg-text">This share link is not valid.</p></div></div>
 <div id="cd-join"><form id="cd-join-form">
   <h1 id="cd-join-title">Shared screen</h1>
   <p id="cd-join-sub"></p>
@@ -113,7 +113,7 @@ ${opts.thumb ? '#rd-toolbar, #rd-dock, #rd-side, #rd-edge, #rd-stats, .rd-dock, 
 
 export function messagePage(title: string, text: string, action?: { href: string; label: string }): string {
   return `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${esc(title)}</title><style>${BASE_CSS} body{display:flex;min-height:100vh;align-items:center;justify-content:center;}
+<title>${esc(title)}</title><link rel="shortcut icon" href="/assets/images/share-icon.svg"><style>${BASE_CSS} body{display:flex;min-height:100vh;align-items:center;justify-content:center;}
 .box{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:28px;max-width:440px;text-align:center}</style></head>
 <body><div class="box"><h2>${esc(title)}</h2><p>${esc(text)}</p>${action ? `<p><a class="btn" href="${esc(action.href)}">${esc(action.label)}</a></p>` : ''}</div></body></html>`;
 }
@@ -125,8 +125,8 @@ export function adminPage(opts: { email: string; csrf: string; version: string }
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<title>CortenDesk Share</title>
-<link rel="shortcut icon" href="/assets/images/cortendesk-sm.svg">
+<title>Share for CortenDesk</title>
+<link rel="shortcut icon" href="/assets/images/share-icon.svg">
 <style>
 ${BASE_CSS}
 header { display:flex; align-items:center; gap:12px; padding:14px 24px; border-bottom:1px solid var(--line); }
@@ -158,8 +158,8 @@ th { color:var(--muted); font-weight:500; }
 </head>
 <body>
 <header>
-  <img src="/assets/images/cortendesk-sm.svg" alt="" width="24" height="24">
-  <h1>CortenDesk Share</h1>
+  <img src="/assets/images/share-icon.svg" alt="" width="24" height="24">
+  <h1>Share for CortenDesk <span class="muted" style="font-weight:400;font-size:13px;margin-left:8px">unofficial add-on</span></h1>
   <span class="who">${esc(opts.email)}</span>
   <form method="post" action="/auth/logout"><input type="hidden" name="csrf" value="${esc(opts.csrf)}"><button class="secondary">Sign out</button></form>
 </header>
