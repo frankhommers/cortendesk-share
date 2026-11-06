@@ -336,7 +336,7 @@ function main(): void {
     });
   });
   attachGateway(server);
-  server.listen(config.port, () => log('listening', { port: config.port, version: VERSION }));
+  server.listen(config.port, config.host, () => log('listening', { host: config.host, port: config.port, version: VERSION }));
   void ensureLink().then(() => log('cortendesk', { ...linkStatus() }));
   const stop = (): void => {
     shutdownGateway();

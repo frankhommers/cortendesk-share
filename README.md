@@ -76,7 +76,7 @@ services:
 | `SHARE_ALLOWED_EMAILS` | Comma-separated emails that may use the admin pages |
 | `TRUSTED_PROXIES` | Addresses whose `X-Forwarded-For` is believed, or `*` |
 | `SHARE_DEVICE_NAME` | Prefix shown on the device (default `RustdeskShare`) |
-| `PORT`, `DATA_DIR` | Default `8090`, `/data` |
+| `PORT`, `HOST`, `DATA_DIR` | Default `8090`, `0.0.0.0`, `/data`. With host networking, set `HOST=127.0.0.1` so only the local proxy can reach it |
 
 ## Using it
 

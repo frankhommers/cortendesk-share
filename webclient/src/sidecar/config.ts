@@ -23,6 +23,7 @@ const cdUrl = trimSlash(env('CD_URL'));
 
 export const config = {
   port: Number(env('PORT', '8090')),
+  host: env('HOST', '0.0.0.0'),
   dataDir: env('DATA_DIR', '/data'),
   publicDir: env('PUBLIC_DIR') || resolve(dirname(process.argv[1] ?? '/app/dist/sidecar.mjs'), '../public'),
   publicUrl: trimSlash(env('SHARE_PUBLIC_URL')),

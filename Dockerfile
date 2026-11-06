@@ -20,5 +20,5 @@ RUN mkdir -p /data && chown node:node /data && find /app/public -name '*.map' -d
 USER node
 VOLUME /data
 EXPOSE 8090
-HEALTHCHECK --interval=30s --timeout=5s CMD wget -q -O /dev/null http://127.0.0.1:8090/health || exit 1
+HEALTHCHECK --interval=30s --timeout=5s CMD wget -q -O /dev/null "http://127.0.0.1:${PORT:-8090}/health" || exit 1
 CMD ["node", "/app/dist/sidecar.mjs"]
