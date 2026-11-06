@@ -189,6 +189,10 @@ th { color:var(--muted); font-weight:500; }
       <label><input type="checkbox" id="r-audio"> sound</label>
       <label><input type="checkbox" id="r-chat" checked> chat</label>
     </div>
+    <div class="row rights">
+      <label><input type="checkbox" id="use-pw" checked> Let guests in with the password (no Accept click)</label>
+      <span id="use-pw-note" class="muted"></span>
+    </div>
     <div class="row">
       <label>Label <input id="label" maxlength="40" placeholder="e.g. Sprint review"></label>
       <label>Valid for <select id="duration">
@@ -272,9 +276,21 @@ th { color:var(--muted); font-weight:500; }
     if (!d) return;
     localStorage.setItem('cd-share-device', d.id);
     $('pw-row').style.display = '';
-    $('pw-state').textContent = d.hasPassword ? 'Password known (in memory only): guests connect without a click.' : 'No password: the device asks to accept each guest. The password is kept in memory only, so enter it again after the sidecar restarts.';
+    $('pw-state').textContent = d.hasPassword ? 'Password known (in memory only until the sidecar restarts).' : 'No password: the preview asks you to accept each screen on the device. It is kept in memory only.';
     $('pw-remove').style.display = d.hasPassword ? '' : 'none';
+    usePwChanged();
   }
+
+  function usePwChanged() {
+    var d = current();
+    var has = !!(d && d.hasPassword);
+    $('use-pw').disabled = !has;
+    if (!has) $('use-pw').checked = false;
+    else if (!$('use-pw').dataset.touched) $('use-pw').checked = true;
+    $('use-pw-note').textContent = !has ? 'No password known, so each guest needs an Accept click on the device.'
+      : $('use-pw').checked ? '' : 'The password is used only for the preview; you accept each guest on the device.';
+  }
+  $('use-pw').onchange = function () { this.dataset.touched = '1'; usePwChanged(); };
 
   function clearPreviews() {
     $('thumbs').innerHTML = '';
@@ -334,6 +350,7 @@ th { color:var(--muted); font-weight:500; }
     api('POST', '/admin/api/links', {
       device: d.id, deviceName: d.name, display: selected === 'all' ? null : selected,
       label: $('label').value.trim(), duration: Number($('duration').value), maxViewers: Number($('max').value),
+      usePassword: $('use-pw').checked,
       rights: { control: $('r-control').checked, clipboard: $('r-clipboard').checked, files: $('r-files').checked, audio: $('r-audio').checked, chat: $('r-chat').checked }
     }).then(function (r) {
       $('created').style.display = 'block';
@@ -356,7 +373,7 @@ th { color:var(--muted); font-weight:500; }
       if (!r.links.length) { $('links').innerHTML = 'No active links.'; return; }
       $('links').innerHTML = '<table><tr><th>Label</th><th>Device</th><th>Screen</th><th>Guests may</th><th>Until</th><th>Watching now</th><th></th></tr>' +
         r.links.map(function (l) {
-          return '<tr><td>' + esc(l.label) + '</td><td>' + esc(l.deviceName) + '</td><td>' + (l.display === null ? 'all' : 'screen ' + (l.display + 1)) + '</td><td>' + esc(rightsText(l.rights)) +
+          return '<tr><td>' + esc(l.label) + '</td><td>' + esc(l.deviceName) + '</td><td>' + (l.display === null ? 'all' : 'screen ' + (l.display + 1)) + '</td><td>' + esc(rightsText(l.rights)) + (l.usePassword ? '' : ' <span class="pill">Accept on device</span>') +
             '</td><td>' + fmtTime(l.expiresAt) + '</td><td>' + (l.viewers.length ? l.viewers.map(function (v) { return '<span class="pill on">' + esc(v.name || 'Guest') + ' · ' + esc(v.ip) + '</span>'; }).join(' ') : '<span class="muted">nobody</span> <span class="muted">(max ' + l.maxViewers + ')</span>') +
             '</td><td style="white-space:nowrap">' + (l.url ? '<button class="secondary" data-copy="' + esc(l.url) + '">Copy link</button> ' : '') + '<button class="danger" data-end="' + l.id + '">End</button></td></tr>';
         }).join('') + '</table>';

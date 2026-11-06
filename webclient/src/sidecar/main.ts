@@ -179,6 +179,7 @@ async function adminApi(req: IncomingMessage, res: ServerResponse, path: string,
           kind: 'preview',
           token_hash: sha256Hex(token),
           token_enc: null,
+          use_password: 1,
           label: 'preview',
           device_id: device,
           device_name: known.name,
@@ -203,6 +204,7 @@ async function adminApi(req: IncomingMessage, res: ServerResponse, path: string,
         deviceName: l.device_name,
         deviceId: l.device_id,
         url: storedUrl(l.token_enc),
+        usePassword: !!l.use_password,
         display: l.display,
         rights: permissionsFor(l),
         maxViewers: l.max_viewers,
@@ -225,6 +227,7 @@ async function adminApi(req: IncomingMessage, res: ServerResponse, path: string,
       kind: 'share',
       token_hash: sha256Hex(token),
       token_enc: encrypt(token),
+      use_password: b.usePassword === false ? 0 : 1,
       label: String(b.label ?? '').trim().slice(0, 40) || known.name,
       device_id: device,
       device_name: known.name,
@@ -234,7 +237,7 @@ async function adminApi(req: IncomingMessage, res: ServerResponse, path: string,
       expires_at: Math.floor(Date.now() / 1000) + duration,
       created_by: s.email,
     });
-    log('link_created', { link: id, device, display, rights, by: s.email });
+    log('link_created', { link: id, device, display, rights, usePassword: b.usePassword !== false, by: s.email });
     return json(res, 200, { id, url: linkUrl(token) });
   }
   const endMatch = /^\/admin\/api\/links\/(\d+)\/end$/.exec(path);

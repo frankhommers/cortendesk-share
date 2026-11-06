@@ -24,6 +24,7 @@ export type LinkRow = {
   created_by: string;
   last_used_at: number | null;
   token_enc: string | null;
+  use_password: number;
 };
 
 export type SessionRow = {
@@ -82,6 +83,8 @@ export function openDb(): DatabaseSync {
   // The link token, encrypted, so an active link can be copied again.
   const cols = (db.prepare('PRAGMA table_info(links)').all() as { name: string }[]).map((c) => c.name);
   if (!cols.includes('token_enc')) db.exec('ALTER TABLE links ADD COLUMN token_enc TEXT');
+  // Whether guests on this link get in with the device password (no Accept click).
+  if (!cols.includes('use_password')) db.exec('ALTER TABLE links ADD COLUMN use_password INTEGER NOT NULL DEFAULT 1');
   // Sessions still open from before a restart ended with it.
   db.prepare("UPDATE sessions SET ended_at = ?, end_reason = 'restart' WHERE ended_at IS NULL").run(now());
   // Preview links are throwaway.
@@ -122,9 +125,9 @@ export function devicesWithPassword(): Set<string> {
 export function insertLink(l: Omit<LinkRow, 'id' | 'revoked_at' | 'last_used_at' | 'created_at'>): number {
   const r = db
     .prepare(
-      'INSERT INTO links (kind, token_hash, token_enc, label, device_id, device_name, display, rights, max_viewers, expires_at, created_at, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO links (kind, token_hash, token_enc, use_password, label, device_id, device_name, display, rights, max_viewers, expires_at, created_at, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
     )
-    .run(l.kind, l.token_hash, l.token_enc, l.label, l.device_id, l.device_name, l.display, l.rights, l.max_viewers, l.expires_at, now(), l.created_by);
+    .run(l.kind, l.token_hash, l.token_enc, l.use_password, l.label, l.device_id, l.device_name, l.display, l.rights, l.max_viewers, l.expires_at, now(), l.created_by);
   return Number(r.lastInsertRowid);
 }
 

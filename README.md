@@ -10,13 +10,14 @@ and needs no changes to it. It is an unofficial add-on, not part of CortenDesk.
   passes messages through an allowlist, so a modified browser can't do more.
 - **One screen only.** You pick a screen from live previews when you make the
   link. The guest sees that screen and can't switch to another.
-- **No Accept click.** Give the sidecar the device password and guests
-  connect right away. The password is kept in memory only, never on disk, and
-  never reaches the guests. After a restart you enter it again; until then
-  the device shows its normal accept window.
+- **No Accept click.** Give the sidecar the device password. It is always
+  used for the screen previews, so you don't accept every screen. Per link you
+  choose whether guests get in with it too, or whether you accept each guest
+  on the device. The password is kept in memory only, never on disk, and
+  never reaches the guests. After a restart you enter it again.
 - **Clear naming.** The device shows each guest as
-  `🔗 <guest name> · <guest IP> · <link label>`. The most important parts come
-  first, because RustDesk cuts long names off. The marker is configurable.
+  `♻ <guest name> · <guest IP> · <link label>`. The most important parts come
+  first, because RustDesk cuts long names off. The format is a template.
 - **Admin pages behind OIDC**, limited to a list of email addresses.
 
 Guests need only HTTPS to the sidecar. The sidecar talks to CortenDesk's
@@ -77,7 +78,8 @@ services:
 | `OIDC_ISSUER`, `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET`, `OIDC_SCOPES` | Admin sign-in |
 | `SHARE_ALLOWED_EMAILS` | Comma-separated emails that may use the admin pages |
 | `TRUSTED_PROXIES` | Addresses whose `X-Forwarded-For` is believed, or `*` |
-| `SHARE_NAME_PREFIX`, `SHARE_NAME_SUFFIX` | Text before and after each guest's name on the device (default `🔗` and nothing) |
+| `SHARE_NAME_TEMPLATE` | How a guest is named on the device, with `{guest}`, `{ip}`, `{label}` (default `♻ {guest} · {ip} · {label}`) |
+| `SHARE_PREVIEW_NAME` | How the preview connection is named on the device (default `♻ preview`) |
 | `SHARE_DEVICE_NAME` | Name of the sidecar's own device in CortenDesk (default `RustdeskShare`) |
 | `PORT`, `HOST`, `DATA_DIR` | Default `8090`, `0.0.0.0`, `/data`. With host networking, set `HOST=127.0.0.1` so only the local proxy can reach it |
 

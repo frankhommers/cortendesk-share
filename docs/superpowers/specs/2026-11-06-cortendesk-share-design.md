@@ -262,7 +262,9 @@ and Dutch text, and how the guest page and admin pages are built.
 - **Device password in memory only** (Frank's choice, 2026-11-06): never
   written to disk; re-entered after a restart. Link tokens are stored
   encrypted (`SHARE_SECRET_KEY`) so an active link can be copied again.
-- **Name on the device:** `<prefix> <guest> · <IP> · <label> <suffix>`, guest
-  first because RustDesk truncates. Prefix and suffix come from
-  `SHARE_NAME_PREFIX` (default 🔗) and `SHARE_NAME_SUFFIX`.
+- **Name on the device:** template `SHARE_NAME_TEMPLATE` with {guest} {ip}
+  {label}, default `♻ {guest} · {ip} · {label}`; guest first because RustDesk
+  truncates.
+- **Password per link:** always used for the preview; per link the admin
+  chooses whether guests use it or get the Accept window.
 - **Name:** "Share for CortenDesk", an unofficial add-on with its own icon.

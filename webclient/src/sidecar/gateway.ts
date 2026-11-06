@@ -58,19 +58,15 @@ export function permissionsFor(link: LinkRow): SharePermissions {
   return normalizePermissions({ ...r, terminal: false, camera: false });
 }
 
-/** Wraps a name in the configured prefix and suffix characters. */
-export function markName(name: string, prefix = config.namePrefix, suffix = config.nameSuffix): string {
-  return [prefix, name, suffix].filter(Boolean).join(' ');
-}
-
 /**
- * `<prefix> <guest> · <ip> · <label> <suffix>`, as the device shows it. The
- * most important parts come first, because RustDesk cuts long names off.
+ * The name the device shows for a guest, from a template with {guest}, {ip}
+ * and {label}. Put the important parts first: RustDesk cuts long names off.
  */
-export function rustdeskName(label: string, guest: string, ip: string, prefix = config.namePrefix, suffix = config.nameSuffix): string {
-  const clean = (s: string): string => s.replace(/[\u0000-\u001f\u007f·]/g, ' ').replace(/\s+/g, ' ').trim();
-  const parts = [clean(guest).slice(0, NAME_MAX) || 'Guest', ip, clean(label).slice(0, 40)].filter(Boolean);
-  return markName(parts.join(' · ').slice(0, 110), prefix, suffix);
+export function rustdeskName(label: string, guest: string, ip: string, template = config.nameTemplate): string {
+  const clean = (v: string): string => v.replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim();
+  const values: Record<string, string> = { guest: clean(guest).slice(0, NAME_MAX) || 'Guest', ip, label: clean(label).slice(0, 40) };
+  const name = template.replace(/\{(guest|ip|label)\}/g, (_, k: string) => values[k]!);
+  return clean(name).slice(0, 120);
 }
 
 const CONN_KINDS: readonly ShareConnKind[] = ['default', 'fileTransfer'];
@@ -373,9 +369,9 @@ export class ShareConnection {
       return this.closeWithReason('bad_request', 'The viewer did not start the session.');
     }
 
-    const myName = link.kind === 'preview' ? markName('preview') : rustdeskName(link.label, this.guestName, ip);
+    const myName = link.kind === 'preview' ? config.previewName : rustdeskName(link.label, this.guestName, ip);
     this.device = new DeviceLink(
-      { peerId: link.device_id, password: devicePassword(link.device_id), myName, conn: this.conn },
+      { peerId: link.device_id, password: link.use_password ? devicePassword(link.device_id) : '', myName, conn: this.conn },
       (m) => void this.onDeviceMessage(m),
       (reason, text) => this.closeWithReason(reason, text),
     );
@@ -556,7 +552,7 @@ export function probeDisplays(deviceId: string): Promise<{ displays: DisplayInfo
     };
     const timer = setTimeout(() => finish(new Error(password ? 'The device did not answer in time.' : 'Nobody accepted the connection on the device in time.')), password ? 20_000 : 60_000);
     link = new DeviceLink(
-      { peerId: deviceId, password, myName: markName('preview'), conn: 'default' },
+      { peerId: deviceId, password, myName: config.previewName, conn: 'default' },
       (msg) => {
         const u = msg.union;
         if (u?.$case === 'hash') {
