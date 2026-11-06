@@ -95,7 +95,7 @@ ${opts.thumb ? '#rd-toolbar, #rd-dock, #rd-side, #rd-edge, #rd-stats, .rd-dock, 
       };
       if (THUMB) { start(''); return; }
       document.getElementById('cd-join-title').textContent = info.label || 'Shared screen';
-      document.getElementById('cd-join-sub').textContent = (info.device_name ? info.device_name + ' · ' : '') + 'until ' + new Date(info.expires_at * 1000).toLocaleString();
+      document.getElementById('cd-join-sub').textContent = (info.device_name ? info.device_name + ' · ' : '') + 'until ' + (function (d) { var p = function (n) { return (n < 10 ? '0' : '') + n; }; return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()); })(new Date(info.expires_at * 1000));
       var saved = ''; try { saved = localStorage.getItem('cd-share-name') || ''; } catch (e) {}
       var input = document.getElementById('cd-name'); input.value = saved;
       document.getElementById('cd-join').classList.add('on');
