@@ -23,6 +23,7 @@ export type LinkRow = {
   created_at: number;
   created_by: string;
   last_used_at: number | null;
+  token_enc: string | null;
 };
 
 export type SessionRow = {
@@ -47,11 +48,7 @@ export function openDb(): DatabaseSync {
     PRAGMA journal_mode = WAL;
     PRAGMA foreign_keys = ON;
     CREATE TABLE IF NOT EXISTS kv (k TEXT PRIMARY KEY, v TEXT NOT NULL);
-    CREATE TABLE IF NOT EXISTS device_passwords (
-      device_id TEXT PRIMARY KEY,
-      secret TEXT NOT NULL,
-      updated_at INTEGER NOT NULL
-    );
+    DROP TABLE IF EXISTS device_passwords;
     CREATE TABLE IF NOT EXISTS links (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       kind TEXT NOT NULL DEFAULT 'share',
@@ -82,6 +79,9 @@ export function openDb(): DatabaseSync {
     );
     CREATE INDEX IF NOT EXISTS sessions_link ON sessions(link_id);
   `);
+  // The link token, encrypted, so an active link can be copied again.
+  const cols = (db.prepare('PRAGMA table_info(links)').all() as { name: string }[]).map((c) => c.name);
+  if (!cols.includes('token_enc')) db.exec('ALTER TABLE links ADD COLUMN token_enc TEXT');
   // Sessions still open from before a restart ended with it.
   db.prepare("UPDATE sessions SET ended_at = ?, end_reason = 'restart' WHERE ended_at IS NULL").run(now());
   // Preview links are throwaway.
@@ -103,29 +103,28 @@ export function kvSet(k: string, v: string | null): void {
   else db.prepare('INSERT INTO kv (k, v) VALUES (?, ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v').run(k, v);
 }
 
+// Device passwords live in memory only: never on disk, gone after a restart.
+const devicePasswords = new Map<string, string>();
+
 export function getDevicePassword(deviceId: string): string | null {
-  const r = db.prepare('SELECT secret FROM device_passwords WHERE device_id = ?').get(deviceId) as { secret: string } | undefined;
-  return r?.secret ?? null;
+  return devicePasswords.get(deviceId) ?? null;
 }
 
-export function setDevicePassword(deviceId: string, secret: string | null): void {
-  if (secret === null) db.prepare('DELETE FROM device_passwords WHERE device_id = ?').run(deviceId);
-  else
-    db.prepare(
-      'INSERT INTO device_passwords (device_id, secret, updated_at) VALUES (?, ?, ?) ON CONFLICT(device_id) DO UPDATE SET secret = excluded.secret, updated_at = excluded.updated_at',
-    ).run(deviceId, secret, now());
+export function setDevicePassword(deviceId: string, password: string | null): void {
+  if (password) devicePasswords.set(deviceId, password);
+  else devicePasswords.delete(deviceId);
 }
 
 export function devicesWithPassword(): Set<string> {
-  return new Set((db.prepare('SELECT device_id FROM device_passwords').all() as { device_id: string }[]).map((r) => r.device_id));
+  return new Set(devicePasswords.keys());
 }
 
 export function insertLink(l: Omit<LinkRow, 'id' | 'revoked_at' | 'last_used_at' | 'created_at'>): number {
   const r = db
     .prepare(
-      'INSERT INTO links (kind, token_hash, label, device_id, device_name, display, rights, max_viewers, expires_at, created_at, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO links (kind, token_hash, token_enc, label, device_id, device_name, display, rights, max_viewers, expires_at, created_at, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
     )
-    .run(l.kind, l.token_hash, l.label, l.device_id, l.device_name, l.display, l.rights, l.max_viewers, l.expires_at, now(), l.created_by);
+    .run(l.kind, l.token_hash, l.token_enc, l.label, l.device_id, l.device_name, l.display, l.rights, l.max_viewers, l.expires_at, now(), l.created_by);
   return Number(r.lastInsertRowid);
 }
 

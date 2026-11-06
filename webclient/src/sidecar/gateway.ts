@@ -29,7 +29,7 @@ import { config } from './config';
 import { accessToken, getServerKey, identity } from './cortendesk';
 import { endSession, getDevicePassword, linkById, linkByTokenHash, linkUsable, startSession, touchLink, type LinkRow, type Rights } from './db';
 import { clientIp } from './net';
-import { decrypt, sha256Hex } from './secrets';
+import { sha256Hex } from './secrets';
 
 const HELLO_TIMEOUT_MS = 10_000;
 const CHECK_INTERVAL_MS = 3_000;
@@ -58,11 +58,19 @@ export function permissionsFor(link: LinkRow): SharePermissions {
   return normalizePermissions({ ...r, terminal: false, camera: false });
 }
 
-/** `RustdeskShare · <label> · <guest> · <ip>`, as the device shows it. */
-export function rustdeskName(label: string, guest: string, ip: string): string {
+/** Wraps a name in the configured prefix and suffix characters. */
+export function markName(name: string, prefix = config.namePrefix, suffix = config.nameSuffix): string {
+  return [prefix, name, suffix].filter(Boolean).join(' ');
+}
+
+/**
+ * `<prefix> <guest> · <ip> · <label> <suffix>`, as the device shows it. The
+ * most important parts come first, because RustDesk cuts long names off.
+ */
+export function rustdeskName(label: string, guest: string, ip: string, prefix = config.namePrefix, suffix = config.nameSuffix): string {
   const clean = (s: string): string => s.replace(/[\u0000-\u001f\u007f·]/g, ' ').replace(/\s+/g, ' ').trim();
-  const parts = [config.deviceName, clean(label).slice(0, 40), clean(guest).slice(0, NAME_MAX) || 'Guest', ip].filter(Boolean);
-  return parts.join(' · ').slice(0, 120);
+  const parts = [clean(guest).slice(0, NAME_MAX) || 'Guest', ip, clean(label).slice(0, 40)].filter(Boolean);
+  return markName(parts.join(' · ').slice(0, 110), prefix, suffix);
 }
 
 const CONN_KINDS: readonly ShareConnKind[] = ['default', 'fileTransfer'];
@@ -252,8 +260,7 @@ class DeviceLink {
 }
 
 function devicePassword(deviceId: string): string {
-  const blob = getDevicePassword(deviceId);
-  return blob ? (decrypt(blob) ?? '') : '';
+  return getDevicePassword(deviceId) ?? '';
 }
 
 export class ShareConnection {
@@ -366,7 +373,7 @@ export class ShareConnection {
       return this.closeWithReason('bad_request', 'The viewer did not start the session.');
     }
 
-    const myName = link.kind === 'preview' ? `${config.deviceName} · preview` : rustdeskName(link.label, this.guestName, ip);
+    const myName = link.kind === 'preview' ? markName('preview') : rustdeskName(link.label, this.guestName, ip);
     this.device = new DeviceLink(
       { peerId: link.device_id, password: devicePassword(link.device_id), myName, conn: this.conn },
       (m) => void this.onDeviceMessage(m),
@@ -549,7 +556,7 @@ export function probeDisplays(deviceId: string): Promise<{ displays: DisplayInfo
     };
     const timer = setTimeout(() => finish(new Error(password ? 'The device did not answer in time.' : 'Nobody accepted the connection on the device in time.')), password ? 20_000 : 60_000);
     link = new DeviceLink(
-      { peerId: deviceId, password, myName: `${config.deviceName} · preview`, conn: 'default' },
+      { peerId: deviceId, password, myName: markName('preview'), conn: 'default' },
       (msg) => {
         const u = msg.union;
         if (u?.$case === 'hash') {

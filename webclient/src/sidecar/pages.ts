@@ -175,8 +175,8 @@ th { color:var(--muted); font-weight:500; }
     </div>
     <div class="row" id="pw-row" style="display:none">
       <input type="password" id="pw" placeholder="Device password (permanent password in RustDesk)" autocomplete="off" style="min-width:320px">
-      <button type="button" id="pw-save">Save password</button>
-      <button type="button" class="secondary" id="pw-remove">Remove stored password</button>
+      <button type="button" id="pw-save">Use password</button>
+      <button type="button" class="secondary" id="pw-remove">Forget password</button>
     </div>
     <div class="row"><button type="button" id="show-screens">Show screens</button><span id="screens-msg" class="muted"></span></div>
     <div class="thumbs" id="thumbs"></div>
@@ -199,7 +199,7 @@ th { color:var(--muted); font-weight:500; }
       <span id="create-msg" class="err"></span>
     </div>
     <div class="created" id="created">
-      <strong>Link created.</strong> <span class="muted">It is shown only once.</span>
+      <strong>Link created.</strong> <span class="muted">You can copy it again under Active links.</span>
       <input id="created-url" readonly>
       <button type="button" id="copy">Copy</button>
     </div>
@@ -272,7 +272,7 @@ th { color:var(--muted); font-weight:500; }
     if (!d) return;
     localStorage.setItem('cd-share-device', d.id);
     $('pw-row').style.display = '';
-    $('pw-state').textContent = d.hasPassword ? 'Password stored: guests connect without a click.' : 'No password stored: the device asks to accept each guest.';
+    $('pw-state').textContent = d.hasPassword ? 'Password known (in memory only): guests connect without a click.' : 'No password: the device asks to accept each guest. The password is kept in memory only, so enter it again after the sidecar restarts.';
     $('pw-remove').style.display = d.hasPassword ? '' : 'none';
   }
 
@@ -344,12 +344,12 @@ th { color:var(--muted); font-weight:500; }
       loadLinks();
     }).catch(function (e) { $('create-msg').textContent = e.message; });
   };
-  $('copy').onclick = function () {
-    var v = $('created-url').value;
-    var done = function () { $('copy').textContent = 'Copied'; setTimeout(function () { $('copy').textContent = 'Copy'; }, 1500); };
-    if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(v).then(done);
-    else { $('created-url').select(); document.execCommand('copy'); done(); }
-  };
+  function copyText(v, btn) {
+    var done = function () { var t = btn.textContent; btn.textContent = 'Copied'; setTimeout(function () { btn.textContent = t; }, 1500); };
+    if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(v).then(done); return; }
+    var ta = document.createElement('textarea'); ta.value = v; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); done();
+  }
+  $('copy').onclick = function () { copyText($('created-url').value, this); };
 
   function loadLinks() {
     api('GET', '/admin/api/links').then(function (r) {
@@ -358,8 +358,10 @@ th { color:var(--muted); font-weight:500; }
         r.links.map(function (l) {
           return '<tr><td>' + esc(l.label) + '</td><td>' + esc(l.deviceName) + '</td><td>' + (l.display === null ? 'all' : 'screen ' + (l.display + 1)) + '</td><td>' + esc(rightsText(l.rights)) +
             '</td><td>' + fmtTime(l.expiresAt) + '</td><td>' + (l.viewers.length ? l.viewers.map(function (v) { return '<span class="pill on">' + esc(v.name || 'Guest') + ' · ' + esc(v.ip) + '</span>'; }).join(' ') : '<span class="muted">nobody</span> <span class="muted">(max ' + l.maxViewers + ')</span>') +
-            '</td><td><button class="danger" data-end="' + l.id + '">End</button></td></tr>';
+            '</td><td style="white-space:nowrap">' + (l.url ? '<button class="secondary" data-copy="' + esc(l.url) + '">Copy link</button> ' : '') + '<button class="danger" data-end="' + l.id + '">End</button></td></tr>';
         }).join('') + '</table>';
+      var cs = $('links').querySelectorAll('[data-copy]');
+      for (var k = 0; k < cs.length; k++) cs[k].onclick = function () { copyText(this.getAttribute('data-copy'), this); };
       var bs = $('links').querySelectorAll('[data-end]');
       for (var i = 0; i < bs.length; i++) bs[i].onclick = function () {
         api('POST', '/admin/api/links/' + this.getAttribute('data-end') + '/end').then(function () { loadLinks(); loadLog(); });

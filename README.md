@@ -10,11 +10,13 @@ and needs no changes to it. It is an unofficial add-on, not part of CortenDesk.
   passes messages through an allowlist, so a modified browser can't do more.
 - **One screen only.** You pick a screen from live previews when you make the
   link. The guest sees that screen and can't switch to another.
-- **No Accept click.** With the device password stored (encrypted) in the
-  sidecar, guests connect right away. The password never reaches them.
-  Without it, the device shows its normal accept window.
+- **No Accept click.** Give the sidecar the device password and guests
+  connect right away. The password is kept in memory only, never on disk, and
+  never reaches the guests. After a restart you enter it again; until then
+  the device shows its normal accept window.
 - **Clear naming.** The device shows each guest as
-  `RustdeskShare · <link label> · <guest name> · <guest IP>`.
+  `🔗 <guest name> · <guest IP> · <link label>`. The most important parts come
+  first, because RustDesk cuts long names off. The marker is configurable.
 - **Admin pages behind OIDC**, limited to a list of email addresses.
 
 Guests need only HTTPS to the sidecar. The sidecar talks to CortenDesk's
@@ -68,24 +70,27 @@ services:
 | Variable | Meaning |
 |---|---|
 | `SHARE_PUBLIC_URL` | Base URL of the sidecar, used in links and the OIDC redirect |
-| `SHARE_SECRET_KEY` | Encrypts stored device passwords and signs cookies. Changing it makes stored passwords unreadable |
+| `SHARE_SECRET_KEY` | Encrypts stored link tokens and signs cookies. Changing it signs you out and removes **Copy link** from existing links |
 | `CD_URL` | CortenDesk console base URL |
 | `CD_USERNAME`, `CD_PASSWORD` | Service account (optional when signed in through SSO) |
 | `CD_WS_ID_URL`, `CD_WS_RELAY_URL` | Override the WebSocket URLs (default: `CD_URL` + `/ws/id`, `/ws/relay`) |
 | `OIDC_ISSUER`, `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET`, `OIDC_SCOPES` | Admin sign-in |
 | `SHARE_ALLOWED_EMAILS` | Comma-separated emails that may use the admin pages |
 | `TRUSTED_PROXIES` | Addresses whose `X-Forwarded-For` is believed, or `*` |
-| `SHARE_DEVICE_NAME` | Prefix shown on the device (default `RustdeskShare`) |
+| `SHARE_NAME_PREFIX`, `SHARE_NAME_SUFFIX` | Text before and after each guest's name on the device (default `🔗` and nothing) |
+| `SHARE_DEVICE_NAME` | Name of the sidecar's own device in CortenDesk (default `RustdeskShare`) |
 | `PORT`, `HOST`, `DATA_DIR` | Default `8090`, `0.0.0.0`, `/data`. With host networking, set `HOST=127.0.0.1` so only the local proxy can reach it |
 
 ## Using it
 
-1. Sign in, pick the device and store its permanent RustDesk password once.
+1. Sign in, pick the device and enter its permanent RustDesk password. It
+   stays in memory until the sidecar restarts.
 2. Click **Show screens**. Each screen appears as a live preview (it shows on
    the device as `RustdeskShare · preview`). Click the one to share, or
    **All screens**.
 3. Choose what guests may do, how long the link works and how many may watch
-   at once, then **Create link**. The link is shown once.
+   at once, then **Create link**. **Active links** has a **Copy link** button
+   to copy it again later.
 4. The guest opens the link, types their name and clicks **Connect**.
 5. **Active links** shows who is watching. **End** disconnects them at once.
 

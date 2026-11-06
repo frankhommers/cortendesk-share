@@ -22,7 +22,7 @@ import {
 import { attachGateway, endLink, live, log, permissionsFor, probeDisplays, shutdownGateway } from './gateway';
 import { emailAllowed, finishLogin, startLogin } from './oidc';
 import { adminPage, messagePage, sharePage } from './pages';
-import { encrypt, randomToken, sha256Hex, sign, unsign } from './secrets';
+import { decrypt, encrypt, randomToken, sha256Hex, sign, unsign } from './secrets';
 
 const VERSION = process.env.APP_VERSION || 'dev';
 const SESSION_COOKIE = 'cds_session';
@@ -120,6 +120,12 @@ function linkUrl(token: string): string {
   return `${config.publicUrl}/s#${token}`;
 }
 
+/** The link of an active share, for copying again; null for links made before this was stored. */
+function storedUrl(tokenEnc: string | null): string | null {
+  const token = tokenEnc ? decrypt(tokenEnc) : null;
+  return token ? linkUrl(token) : null;
+}
+
 function clampInt(v: unknown, min: number, max: number, dflt: number): number {
   const n = Number(v);
   return Number.isInteger(n) ? Math.min(max, Math.max(min, n)) : dflt;
@@ -156,7 +162,7 @@ async function adminApi(req: IncomingMessage, res: ServerResponse, path: string,
   if (pwMatch && req.method === 'POST') {
     const body = await readJson(req);
     const pw = typeof body.password === 'string' ? body.password : '';
-    setDevicePassword(pwMatch[1]!, pw ? encrypt(pw) : null);
+    setDevicePassword(pwMatch[1]!, pw || null);
     log('device_password', { device: pwMatch[1], by: s.email, set: !!pw });
     return json(res, 200, { ok: true });
   }
@@ -172,6 +178,7 @@ async function adminApi(req: IncomingMessage, res: ServerResponse, path: string,
         insertLink({
           kind: 'preview',
           token_hash: sha256Hex(token),
+          token_enc: null,
           label: 'preview',
           device_id: device,
           device_name: known.name,
@@ -195,6 +202,7 @@ async function adminApi(req: IncomingMessage, res: ServerResponse, path: string,
         label: l.label,
         deviceName: l.device_name,
         deviceId: l.device_id,
+        url: storedUrl(l.token_enc),
         display: l.display,
         rights: permissionsFor(l),
         maxViewers: l.max_viewers,
@@ -216,6 +224,7 @@ async function adminApi(req: IncomingMessage, res: ServerResponse, path: string,
     const id = insertLink({
       kind: 'share',
       token_hash: sha256Hex(token),
+      token_enc: encrypt(token),
       label: String(b.label ?? '').trim().slice(0, 40) || known.name,
       device_id: device,
       device_name: known.name,

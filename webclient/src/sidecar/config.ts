@@ -46,6 +46,9 @@ export const config = {
     .map((e) => e.trim())
     .filter(Boolean),
   deviceName: env('SHARE_DEVICE_NAME', 'RustdeskShare'),
+  // Shown before and after each guest's name on the device, e.g. "🔗 Jan · 1.2.3.4 · Sprint review".
+  namePrefix: env('SHARE_NAME_PREFIX', '🔗'),
+  nameSuffix: env('SHARE_NAME_SUFFIX', ''),
   // Development only: skip OIDC and sign in as this email.
   devLoginEmail: env('DEV_LOGIN_EMAIL'),
 };

@@ -259,3 +259,10 @@ and Dutch text, and how the guest page and admin pages are built.
   when the link is made.
 - **Viewer code base:** the web client from the fork's
   `feature/share-links-gateway` branch, which already has the gateway mode.
+- **Device password in memory only** (Frank's choice, 2026-11-06): never
+  written to disk; re-entered after a restart. Link tokens are stored
+  encrypted (`SHARE_SECRET_KEY`) so an active link can be copied again.
+- **Name on the device:** `<prefix> <guest> · <IP> · <label> <suffix>`, guest
+  first because RustDesk truncates. Prefix and suffix come from
+  `SHARE_NAME_PREFIX` (default 🔗) and `SHARE_NAME_SUFFIX`.
+- **Name:** "Share for CortenDesk", an unofficial add-on with its own icon.

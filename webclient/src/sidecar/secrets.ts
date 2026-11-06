@@ -16,17 +16,17 @@ export function randomToken(bytes = 32): string {
 }
 
 /** AES-256-GCM; output is base64(iv | tag | ciphertext). */
-export function encrypt(plain: string): string {
+export function encrypt(plain: string, purpose = 'link-token'): string {
   const iv = randomBytes(12);
-  const c = createCipheriv('aes-256-gcm', subKey('device-password'), iv);
+  const c = createCipheriv('aes-256-gcm', subKey(purpose), iv);
   const body = Buffer.concat([c.update(plain, 'utf8'), c.final()]);
   return Buffer.concat([iv, c.getAuthTag(), body]).toString('base64');
 }
 
-export function decrypt(blob: string): string | null {
+export function decrypt(blob: string, purpose = 'link-token'): string | null {
   try {
     const raw = Buffer.from(blob, 'base64');
-    const d = createDecipheriv('aes-256-gcm', subKey('device-password'), raw.subarray(0, 12));
+    const d = createDecipheriv('aes-256-gcm', subKey(purpose), raw.subarray(0, 12));
     d.setAuthTag(raw.subarray(12, 28));
     return Buffer.concat([d.update(raw.subarray(28)), d.final()]).toString('utf8');
   } catch {
