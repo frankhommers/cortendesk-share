@@ -618,6 +618,23 @@ export class RdApp {
   }
 
   /**
+   * A guest of a share link sees a neutral "Shared screen", not the console's
+   * branding: they have nothing to do with the console.
+   */
+  private applyShareBrand(share: ShareInfo): void {
+    const icon = '/assets/images/share-icon.svg';
+    const set = (sel: string, fn: (n: HTMLElement) => void): void => {
+      document.querySelectorAll<HTMLElement>(sel).forEach(fn);
+    };
+    set('.rd-tb-brand img, .rd-brand .rd-logo', (n) => { n.setAttribute('src', icon); n.setAttribute('alt', ''); });
+    set('.rd-tb-name, .rd-brand .rd-wordmark', (n) => { n.textContent = 'Shared screen'; });
+    set('.rd-tb-sub', (n) => { n.textContent = share.label; });
+    set('.rd-tagline', (n) => { n.textContent = share.label; });
+    set('.rd-target-cap', (n) => { n.textContent = 'Screen of'; });
+    document.title = share.label ? `${share.label} · Shared screen` : 'Shared screen';
+  }
+
+  /**
    * Strip the page down to what the share allows. This is presentation only:
    * the share gateway enforces the same rules on the server.
    */
@@ -630,6 +647,7 @@ export class RdApp {
     this.el.overlayPeer.textContent = share.deviceName || share.label;
     this.el.peerLabel.textContent = share.deviceName || share.label;
     this.voiceCallSupported = false;
+    this.applyShareBrand(share);
     const hide = (sel: string): void => {
       const n = document.querySelector<HTMLElement>(sel);
       if (n) n.hidden = true;
@@ -2183,7 +2201,7 @@ export class RdApp {
         const hasDisplayControls = !!currentDisplay?.resolutions.length || !!currentDisplay?.originalResolution ||
           !!parseVirtualDisplayCapability(this.peerPlatform, this.platformAdditions);
         this.el.btnMonitors.hidden = this.displays.length < 2 && !hasDisplayControls;
-        document.title = `${this.peerId} — CortenDesk`;
+        if (!this.share) document.title = `${this.peerId} — CortenDesk`;
         break;
       }
       case 'switchDisplay': {
