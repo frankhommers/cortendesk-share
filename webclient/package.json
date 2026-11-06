@@ -1,0 +1,38 @@
+{
+  "name": "cortendesk-share",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Share a RustDesk screen through a browser link, with rights enforced by a gateway next to CortenDesk. AGPL-3.0.",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "gen": "buf generate",
+    "build": "node esbuild.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "build:server": "node esbuild.mjs --server",
+    "start": "node ../dist/sidecar.mjs"
+  },
+  "dependencies": {
+    "jmuxer": "^2.1.1",
+    "libsodium-wrappers": "^0.7.15",
+    "tweetnacl": "^1.0.3",
+    "zstddec": "^0.1.0",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@bufbuild/buf": "^1.50.0",
+    "@types/libsodium-wrappers": "^0.7.14",
+    "@types/node": "^22.20.5",
+    "@types/ws": "^8.5.13",
+    "esbuild": "^0.28.2",
+    "ts-proto": "^2.6.0",
+    "tsx": "^4.23.1",
+    "typescript": "^5.7.0",
+    "vitest": "^5.0.3"
+  }
+}

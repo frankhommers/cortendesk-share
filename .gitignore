@@ -1,0 +1,6 @@
+node_modules/
+dist/
+.e2e/
+public/rdclient/*
+!public/rdclient/logo.png
+.DS_Store
